@@ -28,13 +28,12 @@ class WaypointUpdater(object):
     def __init__(self):
         # Initialize ROS Node
         rospy.init_node('waypoint_updater')
-        rospy.loginfo('Staring waypoint_updater node.')
 
         # ROS Subscribers
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
-        rospy.Subscriber('/traffic_waypoint', Lane, self.waypoints_cb)
-        rospy.Subscriber('/obstacle_waypoints', Lane, self.waypoints_cb)
+        # rospy.Subscriber('/traffic_waypoint', Lane, self.traffic_cb)
+        # rospy.Subscriber('/obstacle_waypoints', Lane, self.obstacle_cb)
 
         # ROS Publishers
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)

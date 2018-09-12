@@ -23,7 +23,6 @@ class TLDetector(object):
 
         # Start ROS Node.
         rospy.init_node('tl_detector')
-        rospy.loginfo('Staring traffic light detector.')
 
         # Set attributes.
         self.pose = None
@@ -90,7 +89,7 @@ class TLDetector(object):
         """
 
         self.has_image = True
-        self.camera_image = msg
+        # self.camera_image = msg
         light_wp, state = self.process_traffic_lights()
 
         '''
