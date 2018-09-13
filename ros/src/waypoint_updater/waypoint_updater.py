@@ -22,7 +22,7 @@ as well as to verify your TL classifier.
 
 '''
 
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 30 # Number of waypoints we will publish. You can change this number
 MAX_DECEL = .5      # Maximum deceleration for vehicle.
 
 class WaypointUpdater(object):
@@ -44,7 +44,6 @@ class WaypointUpdater(object):
         self.base_lane = None
         self.pose = None
         self.stopline_wp_idx = -1
-        # self.base_waypoints = None
         self.waypoints_2d = None
         self.waypoint_tree = None
 
@@ -56,9 +55,6 @@ class WaypointUpdater(object):
         rate = rospy.Rate(50)
 
         while not rospy.is_shutdown():
-            # if self.pose and self.base_waypoints and self.waypoint_tree:
-            #     closest_waypoint_idx = self.get_closest_waypoint_idx()
-            #     self.publish_waypoints(closest_waypoint_idx)
             if self.pose and self.base_lane:
                 self.publish_waypoints()
             rate.sleep()
@@ -86,10 +82,6 @@ class WaypointUpdater(object):
         return closest_idx
 	
     def publish_waypoints(self):
-        # lane = Lane()
-        # lane.header = self.base_waypoints.header
-        # lane.waypoints = self.base_waypoints.waypoints[closest_idx:closest_idx + LOOKAHEAD_WPS]
-        # self.final_waypoints_pub.publish(lane)
         final_lane = self.generate_lane()
         self.final_waypoints_pub.publish(final_lane)
 
@@ -129,7 +121,6 @@ class WaypointUpdater(object):
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
-        # self.base_waypoints = waypoints
         self.base_lane = waypoints
 
         if not self.waypoints_2d:
@@ -137,7 +128,6 @@ class WaypointUpdater(object):
             self.waypoint_tree = KDTree(self.waypoints_2d)
 
     def traffic_cb(self, msg):
-        # TODO: Callback for /traffic_waypoint message. Implement
         self.stopline_wp_idx = msg.data
 
     def obstacle_cb(self, msg):

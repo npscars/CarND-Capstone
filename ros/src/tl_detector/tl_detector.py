@@ -93,11 +93,9 @@ class TLDetector(object):
         self.limit = (self.limit + 1) % 5
         if self.limit != 0:
             return
-        # rospy.loginfo('Throttled.')
-
 
         self.has_image = True
-        # self.camera_image = msg
+        self.camera_image = msg
         light_wp, state = self.process_traffic_lights()
 
         '''
@@ -186,8 +184,6 @@ class TLDetector(object):
         if(self.pose):
             car_wp_idx = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
             
-            # rospy.loginfo('Closest waypoint index: ' + str(car_wp_idx))
-
             # Iterate through all intersections to find closest.
             diff = len(self.waypoints.waypoints)
             for i, light in enumerate(self.lights):
@@ -202,15 +198,6 @@ class TLDetector(object):
 
         if closest_light:
             state = self.get_light_state(closest_light)
-            # rospy.loginfo('Closest light index: ' + str(line_wp_idx))
-            # if state is 0:
-            #     rospy.loginfo("Light is RED")
-            # elif state is 1:
-            #     rospy.loginfo("Light is YELLOW")
-            # elif state is 2:
-            #     rospy.loginfo("Light is GREEN")
-            # elif state is 4:
-            #     rospy.loginfo("Light is UNKNOWN")
             return line_wp_idx, state
 
         return -1, TrafficLight.UNKNOWN
