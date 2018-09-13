@@ -70,6 +70,8 @@ This program is rather computation intensive resulting in generic laptops and PC
 
 - the incoming `/image_color` topic published 800x800 images from the vehicle was throttled from 10 Hz to 2 Hz to reduce the amount of processing happening under the hood
 
+- running the simulator with screen resolution at 640x480 and the graphics quality as fastest provided the best result for reducing the required rendering by the computer
+
 
 ## Traffic Light Classifier
 
