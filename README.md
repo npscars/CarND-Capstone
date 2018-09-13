@@ -42,9 +42,9 @@ The Waypoint Updater (partial) and DBW nodes allow the vehicle to successfully d
 This node subscribes to `/current_pose` which provides the current position (x,y) of the vehicle on the track which is used to search for the closest leading traffic light on the track. Once the traffic light is found the index of that light is published to `/traffic_waypoint` which indicates the next traffic light needed by the Waypoint Updater node. 
 
 <p align="center">
- <img src="./res/green.png" width=300>
- <img src="./res/yellow.png" width=300>
- <img src="./res/red.png" width=300>
+ <img src="./res/green.png" width=280>
+ <img src="./res/yellow.png" width=280>
+ <img src="./res/red.png" width=280>
 </p>
 
 
