@@ -22,7 +22,7 @@ as well as to verify your TL classifier.
 
 '''
 
-LOOKAHEAD_WPS = 30 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 30  # Number of waypoints we will publish. You can change this number
 MAX_DECEL = .5      # Maximum deceleration for vehicle.
 
 class WaypointUpdater(object):
@@ -121,6 +121,7 @@ class WaypointUpdater(object):
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
+        # self.base_waypoints = waypoints
         self.base_lane = waypoints
 
         if not self.waypoints_2d:
