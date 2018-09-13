@@ -1,74 +1,56 @@
-This is the project repo for the final project of the Udacity Self-Driving Car Nanodegree: Programming a Real Self-Driving Car. For more information about the project, see the project introduction [here](https://classroom.udacity.com/nanodegrees/nd013/parts/6047fe34-d93c-4f50-8336-b70ef10cb4b2/modules/e1a23b06-329a-4684-a717-ad476f0d8dff/lessons/462c933d-9f24-42d3-8bdc-a08a5fc866e4/concepts/5ab4b122-83e6-436d-850f-9f4d26627fd9).
+# CarND CAPSTONE Project
 
-Please use **one** of the two installation options, either native **or** docker installation.
+## Project Overview
+This is the final project for the Self Driving Car Engineer Nano degree that brings together everything covered over the course of this program. Here we get to explore a real life example that combines computer vision, sensor fusion, and path planning to allow a vehicle to navigate through its environment while obeying traffic lights and obstacles. We borrow concepts learned from previous projects to publish waypoints ahead of the vehicle to indicate the desired path to follow and use neural networks to classify images and predict the state of a traffic light for our path planning controller. The initial project is built and tested on the Unity simulator provided by Udacity which gets uploaded to Carla once approved!
 
-### Native Installation
 
-* Be sure that your workstation is running Ubuntu 16.04 Xenial Xerus or Ubuntu 14.04 Trusty Tahir. [Ubuntu downloads can be found here](https://www.ubuntu.com/download/desktop).
-* If using a Virtual Machine to install Ubuntu, use the following configuration as minimum:
-  * 2 CPU
-  * 2 GB system memory
-  * 25 GB of free hard drive space
+## Getting Started
+View the project outline and how to download and bringup the source code from the repository [here](https://github.com/djiglesias/CarND-Capstone/blob/master/INSTALL.md). Once downloaded, the following commands can be run to compile the application.
 
-  The Udacity provided virtual machine has ROS and Dataspeed DBW already installed, so you can skip the next two steps if you are using this.
+    $ git clone https://github.com/djiglesias/CarND-Capstone.git
+    $ cd ros
+    $ catkin_make
+    $ source devel/setup.sh
+    $ roslaunch launch/styx.launch
+ 
+ Open the term 3 simulator, which can be downloaded [here](https://github.com/udacity/CarND-Capstone/releases), then disable the manual driving icon and enable the camera for traffic light updates to be sent to the path planning controller!
 
-* Follow these instructions to install ROS
-  * [ROS Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu) if you have Ubuntu 16.04.
-  * [ROS Indigo](http://wiki.ros.org/indigo/Installation/Ubuntu) if you have Ubuntu 14.04.
-* [Dataspeed DBW](https://bitbucket.org/DataspeedInc/dbw_mkz_ros)
-  * Use this option to install the SDK on a workstation that already has ROS installed: [One Line SDK Install (binary)](https://bitbucket.org/DataspeedInc/dbw_mkz_ros/src/81e63fcc335d7b64139d7482017d6a97b405e250/ROS_SETUP.md?fileviewer=file-view-default)
-* Download the [Udacity Simulator](https://github.com/udacity/CarND-Capstone/releases).
+<p align="center">
+ <img src="./res/traffic_light.gif" width=550>
+</p>
 
-### Docker Installation
-[Install Docker](https://docs.docker.com/engine/installation/)
+## Building the ROS Nodes
 
-Build the docker container
-```bash
-docker build . -t capstone
-```
+### Waypoint Updated (Partial)
 
-Run the docker file
-```bash
-docker run -p 4567:4567 -v $PWD:/capstone -v /tmp/log:/root/.ros/ --rm -it capstone
-```
+The first step of the project is to get the ROS controller to publish a sample of waypoints ahead of the car to display the desired trajectory to follow. When the simulator first launches it publishes all the waypoints related to the respective track to `/base_waypoints`, this topic operates as a latch so it is only published once to reduce the amount of processing required during runtime (there are approximately 11,000 waypoints). Additionally, there are eight traffic lights on the simulator track where the location of the stopline is hardcoded via the `sim_traffic_light.config` yaml file loaded upon launch. A helpful walk through for this section is [HERE](https://www.youtube.com/watch?v=6GIFyUzhaQo).
 
-### Port Forwarding
-To set up port forwarding, please refer to the [instructions from term 2](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/16cf4a78-4fc7-49e1-8621-3450ca938b77)
+The track is relatively simple as shown below by the blue line with the traffic lights shown as red dots. However, this section only displays the leading N waypoints ahead of the car since there is no data related to the traffic lights. The output of this node publishes the list of leading waypoinys ahead of the car which is used by the next section for controlling the car via DBW.
 
-### Usage
+<p align="center">
+ <img src="./res/track.png" width=550>
+</p>
 
-1. Clone the project repository
-```bash
-git clone https://github.com/udacity/CarND-Capstone.git
-```
 
-2. Install python dependencies
-```bash
-cd CarND-Capstone
-pip install -r requirements.txt
-```
-3. Make and run styx
-```bash
-cd ros
-catkin_make
-source devel/setup.sh
-roslaunch launch/styx.launch
-```
-4. Run the simulator
+### Drive By Wire Controller
+...
 
-### Real world testing
-1. Download [training bag](https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/traffic_light_bag_file.zip) that was recorded on the Udacity self-driving car.
-2. Unzip the file
-```bash
-unzip traffic_light_bag_file.zip
-```
-3. Play the bag file
-```bash
-rosbag play -l traffic_light_bag_file/traffic_light_training.bag
-```
-4. Launch your project in site mode
-```bash
-cd CarND-Capstone/ros
-roslaunch launch/site.launch
-```
-5. Confirm that traffic light detection works on real life images
+
+### Traffic Light Detector
+...
+
+
+### Waypoint Updater (Full)
+...
+
+
+### Run Simulator
+...
+
+
+
+## Traffic Light Classifier
+...
+
+## Track Test
+...
