@@ -1,5 +1,13 @@
 # CarND CAPSTONE
 
+## Team Members:
+* Duncan Iglesias (Team Lead) duncan.iglesias@gmail.com
+* Konstantin Selyunin selyunin.k.v@gmail.com
+* Aaron Zheng Li gowithwi@gmail.com
+* Meng Xingyu mengxy121@163.com
+* Nirav Shah reachnirav@gmail.com
+
+
 ## Project Overview
 
 This is the final project for the Self Driving Car Engineer Nano degree that brings together everything covered over the course of this program. Here we get to explore a real life example that combines computer vision, sensor fusion, and path planning to allow a vehicle to navigate through its environment while obeying traffic lights and obstacles. We borrow concepts learned from previous projects to publish waypoints ahead of the vehicle to indicate the desired path to follow and use neural networks to classify images and predict the state of a traffic light for our path planning controller. The initial project is built and tested on the Unity simulator provided by Udacity which gets uploaded to Carla once approved!
