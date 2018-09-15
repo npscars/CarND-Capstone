@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 
-import rospy
-from std_msgs.msg import Int32
-from geometry_msgs.msg import PoseStamped, Pose
-from styx_msgs.msg import TrafficLightArray, TrafficLight
-from styx_msgs.msg import Lane
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
-from light_classification.tl_classifier import TLClassifier
-import tf
 import cv2
-import yaml
-from scipy.spatial import KDTree
-import numpy as np
 import math
+import rospy
+import tf
+import yaml
+import numpy as np
+
+from cv_bridge import CvBridge, CvBridgeError
+from geometry_msgs.msg import PoseStamped, Pose
+from light_classification.tl_classifier import TLClassifier
+from sensor_msgs.msg import Image
+from scipy.spatial import KDTree
+from std_msgs.msg import Int32
+from styx_msgs.msg import Lane
+from styx_msgs.msg import TrafficLightArray, TrafficLight
 
 
 STATE_COUNT_THRESHOLD = 3
@@ -56,7 +57,6 @@ class TLDetector(object):
 
         # Image Classifiers.
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
         self.listener = tf.TransformListener()
 
         # Traffic Light State.
@@ -65,6 +65,9 @@ class TLDetector(object):
         self.last_wp = -1
         self.state_count = 0
 
+        self.classifier_initialized = False
+        self.light_classifier = TLClassifier()
+        self.classifier_initialized = True
         rospy.spin()
 
     def pose_cb(self, msg):
@@ -79,6 +82,7 @@ class TLDetector(object):
 
     def traffic_cb(self, msg):
         self.lights = msg.lights
+
 
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index
@@ -96,6 +100,8 @@ class TLDetector(object):
 
         self.has_image = True
         self.camera_image = msg
+        state = self.classify_traffic_light(self.camera_image)
+
         light_wp, state = self.process_traffic_lights()
 
         '''
@@ -127,6 +133,8 @@ class TLDetector(object):
 
         """ 
         # Set the coordinates for the next point.
+        if not self.waypoint_tree:
+            return
         closest_idx = self.waypoint_tree.query([x,y],1)[1]
 	
         # Check if closest is ahead or behind vehicle.
@@ -145,7 +153,6 @@ class TLDetector(object):
 
         return closest_idx
         
-
     def get_light_state(self, light):
         """Determines the current color of the traffic light
 
@@ -167,6 +174,23 @@ class TLDetector(object):
         # #Get classification
         # return self.light_classifier.get_classification(cv_image)
 
+    def classify_traffic_light(self, image):
+        """
+        Simulator provides 800 x 600 rgb8 images
+        :param image:
+        :return:
+        """
+
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
+
+        #Get classification
+        if self.classifier_initialized:
+            return self.light_classifier.get_classification(cv_image)
+        else:
+            return TrafficLight.UNKNOWN
+
+
+
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
             location and color
@@ -181,7 +205,7 @@ class TLDetector(object):
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
-        if(self.pose):
+        if self.pose:
             car_wp_idx = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
             
             # Iterate through all intersections to find closest.
@@ -191,7 +215,7 @@ class TLDetector(object):
                 temp_wp_idx = self.get_closest_waypoint(line[0], line[1])
 
                 d = temp_wp_idx - car_wp_idx
-                if d >= 0 and d < diff:
+                if 0 <= d < diff:
                     diff = d 
                     closest_light = light
                     line_wp_idx = temp_wp_idx
@@ -201,6 +225,7 @@ class TLDetector(object):
             return line_wp_idx, state
 
         return -1, TrafficLight.UNKNOWN
+
 
 if __name__ == '__main__':
     try:
