@@ -33,8 +33,12 @@ class TLClassifier(object):
         self.session = tf.Session(config=config, graph=self.detection_graph)
         self.tl_id = LABELS[9]['id'] # 'name': u'traffic light'
 
-    def detect_light(self, box, image):
-
+    def crop_traffic_light(self, box, image):
+        """
+        :param box: numpy.ndarray, 4-elements vector
+        :param image: numpy.ndarray, camera image
+        :return: cropped traffic light
+        """
         image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
         im_width, im_height = image_pil.size
         draw = ImageDraw.Draw(image_pil)
@@ -47,16 +51,18 @@ class TLClassifier(object):
         # here we get a traffic classified traffic light
         traffic_light = image_pil.crop([int(left), int(top), int(right), int(bottom)])
         # TODO: find circle using Hough transform and detect color of pixels inside the circle
+        return traffic_light
 
-    def get_classification(self, image):
-        """Determines the color of the traffic light in the image
-
-        Args:
-            image (cv::Mat): image containing the traffic light
-
-        Returns:
-            int: ID of traffic light color (specified in styx_msgs/TrafficLight)
-
+    def invoke_tensorflow_classifier(self, image):
+        """
+        Given an image as np.array, invoke a tensorflow classifier and
+        return classification results
+        :param image: numpy array
+        :return: Tuple[boxes, scores, classes, num]
+        * boxes:
+        * scores:
+        * classes:
+        * num:
         """
         image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')
         # Each box represents a part of the image where a particular object was detected.
@@ -72,18 +78,86 @@ class TLClassifier(object):
         (boxes, scores, classes, num) = self.session.run(
             [detection_boxes, detection_scores, detection_classes, num_detections],
             feed_dict={image_tensor: image_np_expanded})
+        return boxes, scores, classes, num
+
+    def detect_traffic_light(self, image_pil):
+        """
+        :param image_pil: PIL.Image._ImageCrop -> cropped traffic light image
+        :return: color of the traffic light
+        """
+        image_np = np.array(image_pil)
+        gray_image = cv2.cvtColor(image_np, cv2.COLOR_RGB2GRAY)
+        # Hough circles transform, disabled for now since now always good alignment
+        # circles = cv2.HoughCircles(gray_image, cv2.HOUGH_GRADIENT, dp=1, minDist=16,
+        #                            param1=65, param2=36, minRadius=0, maxRadius=0)
+        # for i in circles[0, :]:
+        #     # draw the outer circle
+        #     color = (255, 255, 255)
+        #     cv2.circle(image_np, (i[0], i[1]), i[2], color, 2)
+        #     # draw the center of the circle
+        #     cv2.circle(image_np, (i[0], i[1]), 2, (0, 0, 255), 3)
+
+        # convert to hsv
+        image_hsv = cv2.cvtColor(image_np, cv2.COLOR_RGB2HSV)
+
+        # mask of red (0,0,0) ~ (15, 255,255) and
+        mask_red1 = cv2.inRange(image_hsv, (0, 50, 50), (15, 255, 255))
+        mask_red2 = cv2.inRange(image_hsv, (168, 50, 50), (180, 255, 255))
+        mask_red = mask_red1 | mask_red2
+        bool_mask = mask_red > 0
+        template = np.zeros_like(image_hsv, np.uint8)
+        template[bool_mask] = image_hsv[bool_mask]
+        # convert resulting image to grayscale
+        template_rgb = cv2.cvtColor(template, cv2.COLOR_HSV2RGB)
+        template_gray = cv2.cvtColor(template_rgb, cv2.COLOR_RGB2GRAY)
+        # plt.plot(np.where(template_gray > 100)[0], np.where(template_gray > 100)[1], linestyle='None', marker='.');
+        # plt.show()
+        intensity_threshold = 100
+        red_pixels = len(np.where(template_gray > intensity_threshold)[0])
+        other_pixels = len(np.where(template_gray < intensity_threshold)[0])
+        threshold_percent = 0.029
+        red_pixels_percent = 1. * red_pixels / other_pixels
+        if red_pixels_percent > threshold_percent:
+            return TrafficLight.RED
+
+        # mask o yellow (15,0,0) ~ (35, 255, 255)
+        mask_yellow = cv2.inRange(image_hsv, (16, 50, 50), (35, 255, 255))
+        bool_mask = mask_yellow > 0
+        template = np.zeros_like(image_hsv, np.uint8)
+        template[bool_mask] = image_hsv[bool_mask]
+        # convert resulting image to grayscale
+        template_rgb = cv2.cvtColor(template, cv2.COLOR_HSV2RGB)
+        template_gray = cv2.cvtColor(template_rgb, cv2.COLOR_RGB2GRAY)
+        # plt.plot(np.where(template_gray > 100)[0], np.where(template_gray > 100)[1], linestyle='None', marker='.');
+        # plt.show()
+        # mask of green (36,0,0) ~ (70, 255,255)
+        mask_green = cv2.inRange(image_hsv, (36, 50, 50), (70, 255, 255))
+
+    def get_classification(self, image):
+        """Determines the color of the traffic light in the image
+
+        Args:
+            image (cv::Mat): image containing the traffic light
+
+        Returns:
+            int: ID of traffic light color (specified in styx_msgs/TrafficLight)
+
+        """
+        # get classification from tensorflow model
+        boxes, scores, classes, _ = self.invoke_tensorflow_classifier(image)
         # define a detection threshold with a relatively high confidence
         detection_threshold = 0.4
         # find all occurrences where probability is greater then the threshold
-        max_probable_indices = []
+        max_probable_tl_indices = []
         for idx, score in enumerate(scores[0]):
             if score >= detection_threshold and classes[0][idx] == self.tl_id:
-                max_probable_indices.append(idx)
-        max_probable_boxes = boxes[0][max_probable_indices]
+                max_probable_tl_indices.append(idx)
+        max_probable_tl_boxes = boxes[0][max_probable_tl_indices]
 
-
-        # TODO: (ii) detect the light of the traffic light
-        for idx, box in enumerate(max_probable_boxes):
-            self.detect_light(box, image)
+        traffic_lights = []
+        for idx, box in enumerate(max_probable_tl_boxes):
+            traffic_light_image = self.crop_traffic_light(box, image)
+            traffic_light_color = self.detect_traffic_light(traffic_light_image)
+            traffic_lights.append(traffic_light_color)
 
         return TrafficLight.UNKNOWN
