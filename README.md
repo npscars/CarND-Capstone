@@ -1,6 +1,7 @@
 # CarND CAPSTONE
 
-## Team Members:
+## Team Members
+
 * Duncan Iglesias (Team Lead) duncan.iglesias@gmail.com
 * Konstantin Selyunin selyunin.k.v@gmail.com
 * Aaron Zheng Li gowithwi@gmail.com

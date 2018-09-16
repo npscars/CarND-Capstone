@@ -10,6 +10,8 @@ from labels import LABELS
 import os
 import rospy
 
+from PIL import Image, ImageDraw
+
 
 class TLClassifier(object):
     def __init__(self):
@@ -31,15 +33,15 @@ class TLClassifier(object):
         self.session = tf.Session(config=config, graph=self.detection_graph)
         self.tl_id = LABELS[9]['id'] # 'name': u'traffic light'
 
-
-    def detect_light(self, box, image):
+       def detect_light(self, box, image):
         image_width, image_height, num_channels = image.shape
         ymin, xmin, ymax, xmax = box
+        image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
         (left, right, top, bottom) = (int(xmin * image_width), int(xmax * image_width),
                                       int(ymin * image_height), int(ymax * image_height))
-        crop_img = image[int(ymin * image_height):int(ymax * image_height),
-                         int(xmin * image_width):int(xmax * image_width)]
-        pass
+        # here we get a traffic classified traffic light
+        traffic_light = image_pil.crop([left, top, right, bottom])
+        # TODO: find circle using Hough transform and detect color of pixels inside the circle
 
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -65,7 +67,6 @@ class TLClassifier(object):
         (boxes, scores, classes, num) = self.session.run(
             [detection_boxes, detection_scores, detection_classes, num_detections],
             feed_dict={image_tensor: image_np_expanded})
-        # TODO: (i) find traffic light in predicted classes
         # define a detection threshold with a relatively high confidence
         detection_threshold = 0.4
         # find all occurrences where probability is greater then the threshold
@@ -75,9 +76,9 @@ class TLClassifier(object):
                 max_probable_indices.append(idx)
         max_probable_boxes = boxes[0][max_probable_indices]
 
+
         # TODO: (ii) detect the light of the traffic light
-        if len(max_probable_indices) > 0:
-            for idx, box in enumerate(max_probable_boxes):
-                self.detect_light(box, image)
+        for idx, box in enumerate(max_probable_boxes):
+            self.detect_light(box, image)
 
         return TrafficLight.UNKNOWN
