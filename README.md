@@ -88,9 +88,9 @@ This program can be divided into two steps.
 Hence, the algorithm classified that the traffic light is red. The assumption is that the red light is the topmost/rightmost light in the traffic light box.
 
 <p align="center">
- <img src="./res/full_image.png" width=280>
- <img src="./res/cropped_tl.png" width=280>
- <img src="./res/split_tl.png" width=280>
+ <img src="./res/full_image.png" width=500>
+ <img src="./res/cropped_tl.png" width=170>
+ <img src="./res/split_tl.png" width=170>
 </p>
 
 
