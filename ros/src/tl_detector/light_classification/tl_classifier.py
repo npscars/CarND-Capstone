@@ -33,14 +33,19 @@ class TLClassifier(object):
         self.session = tf.Session(config=config, graph=self.detection_graph)
         self.tl_id = LABELS[9]['id'] # 'name': u'traffic light'
 
-       def detect_light(self, box, image):
-        image_width, image_height, num_channels = image.shape
-        ymin, xmin, ymax, xmax = box
+    def detect_light(self, box, image):
+
         image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
-        (left, right, top, bottom) = (int(xmin * image_width), int(xmax * image_width),
-                                      int(ymin * image_height), int(ymax * image_height))
+        im_width, im_height = image_pil.size
+        draw = ImageDraw.Draw(image_pil)
+        ymin, xmin, ymax, xmax = box
+        (left, right, top, bottom) = (xmin * im_width, xmax * im_width,
+                                      ymin * im_height, ymax * im_height)
+        # box_color = (0, 255, 0)
+        # draw.line([(left, top), (left, bottom), (right, bottom),
+        #            (right, top), (left, top)], width=8, fill=box_color)
         # here we get a traffic classified traffic light
-        traffic_light = image_pil.crop([left, top, right, bottom])
+        traffic_light = image_pil.crop([int(left), int(top), int(right), int(bottom)])
         # TODO: find circle using Hough transform and detect color of pixels inside the circle
 
     def get_classification(self, image):
