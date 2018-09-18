@@ -3,30 +3,31 @@ import rospy
 import tensorflow as tf
 import numpy as np
 import cv2
-import os
+import glob
 from functools import partial
 
 class TLClassifier(object):
     def __init__(self):
         #TODO load classifier
+        self.DETECTION_THRESHOLD = 0.9
+        self.COCO_TL_NUM = 10
         MODELCHUNK_BASE_DIR = rospy.get_param('~model_path')
+        self.readsize = 1024
+        
         #rospy.logwarn(MODEL_BASE_DIR)
         PATH_TO_MODEL = MODELCHUNK_BASE_DIR + '/rfcn_resnet101_coco_2018_01_28/frozen_inference_graph.pb'
         # reassemble the model from chunks. credit goes to team vulture for this idea
         output = open(PATH_TO_MODEL, 'wb')
-        frozen_model_path = os.path.dirname(MODELCHUNK_BASE_DIR+'/rfcn_resnet101_coco_2018_01_28/')
-        chunks = os.listdir(frozen_model_path)
+        frozen_model_path = (MODELCHUNK_BASE_DIR+'/rfcn_resnet101_coco_2018_01_28/')
+        chunks = glob.glob(frozen_model_path + 'chunk*')
         chunks.sort()
         for filename in chunks:
-            filepath = os.path.join(frozen_model_path, filename)
-            with open(filepath, 'rb') as fileobj:
+            with open(filename, 'rb') as fileobj:
                 for chunk in iter(partial(fileobj.read, self.readsize), ''):
                     output.write(chunk)
         output.close()
         rospy.loginfo("Model recreated to run for TL detection")
 
-        self.DETECTION_THRESHOLD = 0.9
-        self.COCO_TL_NUM = 10
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():
             od_graph_def = tf.GraphDef()
