@@ -85,6 +85,8 @@ class TLClassifier(object):
 
     def red_yellow_green(self, rgb_image):
         h,w = rgb_image.shape[0], rgb_image.shape[1]
+        rgb_image = rgb_image[int(1*h/10):int(9*h/10),int(1*w/10):int(9*w/10)] #as too outer non-traffic-light area affects classification
+        h,w = rgb_image.shape[0], rgb_image.shape[1]
 
         if h>w: # if traffic lights are vertical (topmost red)
             one_half_rgb_image = rgb_image[0:int(h/3),:] # red area
@@ -94,12 +96,27 @@ class TLClassifier(object):
             one_half_rgb_image = rgb_image[:,int(2*w/3):w] # red area
             two_half_rgb_image = rgb_image[:,int(w/3):int(2*w/3)] # yellow area
             three_half_rgb_image = rgb_image[:,0:int(w/3)] # green area
-            
-        hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
-        sum_bright_full = float(np.sum(hsv[:,:,2])) # float casting is just for ratio calculation 
+        
+        # To just consider the centre area of each half for more robust especially red vs. yellow detection.
+        h1,w1 = one_half_rgb_image.shape[0], one_half_rgb_image.shape[1]
+        one_half_rgb_image = one_half_rgb_image[int(1*h1/4):int(3*h1/4), int(1*w1/4):int(3*w1/4)]
+        two_half_rgb_image = two_half_rgb_image[int(1*h1/4):int(3*h1/4), int(1*w1/4):int(3*w1/4)]
+        three_half_rgb_image = three_half_rgb_image[int(1*h1/4):int(3*h1/4), int(1*w1/4):int(3*w1/4)]
+        
+        #f, (ax1, ax2, ax3) = plt.subplots(3,1)
+        #ax1.imshow(one_half_rgb_image)
+        #ax2.imshow(two_half_rgb_image)
+        #ax3.imshow(three_half_rgb_image)
+        #plt.hold(True)
+        #f.savefig(os.path.splitext(image_path)[0] + "_cropped.png",bbox_inches='tight')
+        #plt.close(f)
+        
+        #hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
+        #sum_bright_full = float(np.sum(hsv[:,:,2]))
         hsv_one_half = cv2.cvtColor(one_half_rgb_image, cv2.COLOR_RGB2HSV)
         hsv_two_half = cv2.cvtColor(two_half_rgb_image, cv2.COLOR_RGB2HSV)
         hsv_three_half = cv2.cvtColor(three_half_rgb_image, cv2.COLOR_RGB2HSV)
+        sum_bright_full = float(np.sum(hsv_one_half[:,:,2])+np.sum(hsv_two_half[:,:,2])+np.sum(hsv_three_half[:,:,2]))
         ratio_red = np.sum(hsv_one_half[:,:,2])/sum_bright_full
         ratio_yellow = np.sum(hsv_two_half[:,:,2])/sum_bright_full
         ratio_green = np.sum(hsv_three_half[:,:,2])/sum_bright_full

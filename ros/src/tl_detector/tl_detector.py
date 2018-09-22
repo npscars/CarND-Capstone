@@ -47,14 +47,16 @@ class TLDetector(object):
         #Output is index of thw waypoint for nearest upcoming red light's stop line.
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
-        self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
-        self.listener = tf.TransformListener()
-
         self.state = TrafficLight.UNKNOWN
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
+
+        self.bridge = CvBridge()
+        self.classifier_initialized = False
+        self.light_classifier = TLClassifier()
+        self.classifier_initialized = True
+        self.listener = tf.TransformListener()
 
         rospy.spin()
 
@@ -134,22 +136,23 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
         """
 
+        # Run it only if the images are published by simulator/rosbag
         if(not self.has_image):
             self.prev_light_loc = None
-            return False
+            return TrafficLight.UNKNOWN
 
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
 
         #Get classification
-        statusOfLightFromCameraImage = self.light_classifier.get_classification(cv_image)
-        rospy.logwarn("Light Status: Below from Camera ##############################")
-        rospy.logwarn(statusOfLightFromCameraImage)
-        #rospy.logwarn("Light Status: Below from Simulator ##############################")
-        #rospy.logwarn(light.state)
+        if self.classifier_initialized:
+            statusOfLightFromCameraImage = self.light_classifier.get_classification(cv_image)
+            rospy.loginfo("Light Status: Below from Camera ##############################")
+            rospy.loginfo(statusOfLightFromCameraImage)
+            return statusOfLightFromCameraImage
+        else:
+            return TrafficLight.UNKNOWN
 
-        return statusOfLightFromCameraImage
-
-        #NOT FINISHED but for Testing use simulator data initially but in real data light state should come from classifier
+        #FINISHED above but for Testing use simulator data initially but in real data light state should come from classifier
         #return light.state # --> used for when running simulator 
         
 
@@ -169,19 +172,18 @@ class TLDetector(object):
         stop_line_positions = self.config['stop_line_positions']
         if(self.pose):
             car_wp_idx = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
-
-        #TODO find the closest visible traffic light (if one exists)
-        diff = len(self.waypoints.waypoints)
-        for i, light in enumerate(self.lights):
-            # Get stop line waypoint index
-            line = stop_line_positions[i]
-            temp_wp_idx = self.get_closest_waypoint(line[0],line[1]) #just pass stop line x,y because already we made KDTree function with base waypoints
-            # Find closest stop line waypoint index
-            d = temp_wp_idx - car_wp_idx
-            if (d >= 0 and d < diff):
-                diff = d
-                closest_light = light
-                line_wp_idx = temp_wp_idx
+            #TODO find the closest visible traffic light (if one exists)
+            diff = len(self.waypoints.waypoints)
+            for i, light in enumerate(self.lights):
+                # Get stop line waypoint index
+                line = stop_line_positions[i]
+                temp_wp_idx = self.get_closest_waypoint(line[0],line[1]) #just pass stop line x,y because already we made KDTree function with base waypoints
+                # Find closest stop line waypoint index
+                d = temp_wp_idx - car_wp_idx
+                if (d >= 0 and d < diff):
+                    diff = d
+                    closest_light = light
+                    line_wp_idx = temp_wp_idx
 
         if closest_light:
             state = self.get_light_state(closest_light)
