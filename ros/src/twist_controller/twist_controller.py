@@ -1,49 +1,46 @@
+import rospy
+from yaw_controller import YawController
 from pid import PID
 from lowpass import LowPassFilter
-from yaw_controller import YawController
-import rospy
 
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
 
 
 class Controller(object):
-    def __init__(self, vehicle_mass, fuel_capacity, brake_deadband, decel_limit,
-        accel_limit, wheel_radius, wheel_base, steer_ratio, max_lat_accel, max_steer_angle):
-        
-        # Initiate Yaw Controller
-        self.yaw_controller = YawController(wheel_base, steer_ratio, 0.1, max_lat_accel, max_steer_angle)
+    def __init__(self, vehicle_mass, fuel_capacity, brake_deadband, decel_limit, 
+    	accel_limit, wheel_radius, wheel_base, steer_ratio, max_lat_accel, max_steer_angle):
 
-        # Set PID Constants
+        # TODO: Implement
+        self.yaw_controller = YawController(wheel_base, steer_ratio, 0.1, max_lat_accel, max_steer_angle)
         kp = 0.3
         ki = 0.1
         kd = 0.
-        mn = 0.     # Minimum throttle value.
-        mx = 0.2    # Maximum throttle value.
+        mn = 0.  # min throttle angle
+        mx = 0.2 # max throttle angle
         self.throttle_controller = PID(kp, ki, kd, mn, mx)
 
-        tau = 0.5   # Cutoff frequency.
-        ts = 0.02   # Sample time.
+        # to filter out high frequency noise in velocity use LPF
+        tau = 0.5 # 1/(2*pi*tau) = cut-off frequency)
+        ts = 0.02 # sample time
         self.vel_lpf = LowPassFilter(tau, ts)
 
-        self.vehicle_mass = vehicle_mass
-        self.fuel_capacity = fuel_capacity
-        self.brake_deadband = brake_deadband
-        self.decel_limit = decel_limit
-        self.accel_limit = accel_limit
-        self.wheel_radius = wheel_radius
+        self.vehicle_mass=vehicle_mass
+        self.fuel_capacity=fuel_capacity
+        self.brake_deadband=brake_deadband
+        self.decel_limit=decel_limit
+        self.accel_limit=accel_limit
+        self.wheel_radius=wheel_radius
 
         self.last_time = rospy.get_time()
 
-
     def control(self, current_vel, dbw_enabled, linear_vel, angular_vel):
-        
-        # Disable DBW if not active.
+        # TODO: Change the arg, kwarg list to suit your needs
+        # Return throttle, brake, steer
         if not dbw_enabled:
-            self.throttle_controller.reset()
-            return 0., 0., 0.
+        	self.throttle_controller.reset()
+        	return 0., 0., 0.
 
-        # Calculate outputs.
         current_vel = self.vel_lpf.filt(current_vel)
 
         steering = self.yaw_controller.get_steering(linear_vel, angular_vel, current_vel)
@@ -56,14 +53,14 @@ class Controller(object):
         self.last_time = current_time
 
         throttle = self.throttle_controller.step(vel_error, sample_time)
-        brake = 0
+        brake=0
 
-        if linear_vel == 0. and current_vel < 0.1:
-            throttle = 9
-            brake = 400 # Holding torque to hold car in place.
+        if linear_vel==0. and current_vel <0.1:
+        	throttle=0
+        	brake = 700 # 700Nm required for vehicle not to move when stopped at light. Acceleration ~ 1 m/s2
         elif throttle < .1 and vel_error < 0:
-            throttle = 0
-            decel = max(vel_error, self.decel_limit)
-            brake = abs(decel)*self.vehicle_mass*self.wheel_radius # Braking torque.
+        	throttle=0
+        	decel = max(vel_error, self.decel_limit)
+        	brake = abs(decel)*self.vehicle_mass*self.wheel_radius # ~ Torque in Nm
 
         return throttle, brake, steering
